@@ -25,6 +25,7 @@
 
 import os
 import sys
+import types
 
 import tempfile
 import shutil
@@ -33,7 +34,7 @@ import hashlib
 
 from cms.async.AsyncLibrary import Service, \
      rpc_method, rpc_binary_response, rpc_callback, \
-     logger, make_sync
+     logger
 from cms.async import ServiceCoord, Address
 from cms.service.Utils import mkdir, random_string
 
@@ -155,6 +156,8 @@ class FileCacher:
 
     """
 
+    sync_funcs = []
+
     def __init__(self, service, file_storage, base_dir="fs-cache"):
         """
         service (Service): the service we are running in
@@ -174,9 +177,13 @@ class FileCacher:
         if not ret:
             logger.error("Cannot create necessary directories.")
 
+        if self.service is not None:
+            for funcname in self.sync_funcs:
+                bound_method = types.MethodType(FileCacher.__dict__[funcname], self, FileCacher)
+                self.__dict__[funcname] = self.service.make_sync(default_sync=False)(bound_method)
+
     ## GET ##
 
-    @make_sync()
     def get_file(self, digest, path=None, callback=None,
                  plus=None, bind_obj=None):
         """Get a file from the cache or from the service if not
@@ -208,7 +215,8 @@ class FileCacher:
             if error is not None:
                 logger.error(error)
                 if callback is not None:
-                    callback(bind_obj, None, plus, error)
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, None, plus, error])
 
             # File not existing remotely, deleting it from the cache
             # and returning with error
@@ -218,8 +226,9 @@ class FileCacher:
                 except OSError:
                     pass
                 if callback is not None:
-                    callback(bind_obj, None, plus,
-                             "IOError: 2 No such file or directory.")
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, None, plus,
+                                                    "IOError: 2 No such file or directory."])
 
             # File available remotely, returning the cached instance
             else:
@@ -230,13 +239,15 @@ class FileCacher:
                         shutil.copyfile(cache_path, path)
                     except IOError as e:
                         if callback is not None:
-                            callback(bind_obj, None, plus, repr(e))
+                            self.service.add_deferred(callback,
+                                                      args=[bind_obj, None, plus, repr(e)])
                         return
 
                 # Invocation of the callback
                 if callback is not None:
                     cached_file = open(cache_path, "rb")
-                    callback(bind_obj, cached_file, plus, error)
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, cached_file, plus, error])
 
             # Do not call me again:
             return False
@@ -279,10 +290,10 @@ class FileCacher:
                                        bind_obj=self,
                                        callback=_got_file_remote)
         return True
+    sync_funcs.append('get_file')
 
     ## GET VARIATIONS ##
 
-    @make_sync()
     def get_file_to_file(self, digest,
                          callback=None, plus=None, bind_obj=None):
         """Get a file from the cache or from the service if not
@@ -300,8 +311,8 @@ class FileCacher:
                              callback=callback,
                              plus=plus,
                              bind_obj=bind_obj)
+    sync_funcs.append('get_file_to_file')
 
-    @make_sync()
     def get_file_to_write_file(self, digest, file_obj,
                                callback=None, plus=None, bind_obj=None):
         """Get a file from the cache or from the service if not
@@ -328,11 +339,13 @@ class FileCacher:
             """
             if callback is not None:
                 if error is not None:
-                    callback(bind_obj, None, plus, error)
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, None, plus, error])
                 else:
                     shutil.copyfileobj(data, file_obj)
                     data.close()
-                    callback(bind_obj, None, plus)
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, None, plus])
 
         if bind_obj is None:
             bind_obj = self.service
@@ -340,8 +353,8 @@ class FileCacher:
                              callback=_got_file_to_write_file,
                              plus=None,
                              bind_obj=self)
+    sync_funcs.append('get_file_to_write_file')
 
-    @make_sync()
     def get_file_to_path(self, digest, path,
                          callback=None, plus=None, bind_obj=None):
         """Get a file from the cache or from the service if not
@@ -360,8 +373,8 @@ class FileCacher:
                              callback=callback,
                              plus=plus,
                              bind_obj=bind_obj)
+    sync_funcs.append('get_file_to_path')
 
-    @make_sync()
     def get_file_to_cache(self, digest,
                           callback=None, plus=None, bind_obj=None):
         """Get a file from storage, but do not return it. Just keep it
@@ -379,8 +392,8 @@ class FileCacher:
                                        callback=callback,
                                        plus=plus,
                                        bind_obj=bind_obj) is not None
+    sync_funcs.append('get_file_to_cache')
 
-    @make_sync()
     def get_file_to_string(self, digest,
                            callback=None, plus=None, bind_obj=None):
         """Get a file from the cache or from the service if not
@@ -395,6 +408,9 @@ class FileCacher:
 
         """
 
+        if bind_obj is None:
+            bind_obj = self.service
+
         @rpc_callback
         def _got_file_to_string(self, data, plus2, error=None):
             """Callback for get_file_to_string that unpacks the file-like object
@@ -406,24 +422,23 @@ class FileCacher:
             """
             if callback is not None:
                 if error is not None:
-                    callback(bind_obj, None, plus, error)
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, None, plus, error])
                 else:
                     file_content = data.read()
                     data.close()
-                    callback(bind_obj, file_content, plus)
-
-        if bind_obj is None:
-            bind_obj = self.service
+                    self.service.add_deferred(callback,
+                                              args=[bind_obj, file_content, plus])
 
         return self.get_file(digest=digest,
                              callback=_got_file_to_string,
                              plus=None,
                              bind_obj=self)
+    sync_funcs.append('get_file_to_string')
 
 
     ## PUT ##
 
-    @make_sync()
     def put_file(self, binary_data=None, description="", file_obj=None,
                  path=None, callback=None, plus=None, bind_obj=None):
         """Send a file to FileStorage, and keep a copy locally. The caller has to
@@ -514,10 +529,10 @@ class FileCacher:
                                    callback=_put_file_remote_callback,
                                    plus=[],
                                    bind_obj=self)
+    sync_funcs.append('put_file')
 
     ## PUT SYNTACTIC SUGARS ##
 
-    @make_sync()
     def put_file_from_string(self, content, description="",
                              callback=None, plus=None, bind_obj=None):
         """Send a file to FileStorage keeping a copy locally. The file is
@@ -538,8 +553,8 @@ class FileCacher:
                              callback=callback,
                              plus=plus,
                              bind_obj=bind_obj)
+    sync_funcs.append('put_file_from_string')
 
-    @make_sync()
     def put_file_from_file(self, file_obj, description="",
                            callback=None, plus=None, bind_obj=None):
         """Send a file to FileStorage keeping a copy locally. The file is
@@ -560,8 +575,8 @@ class FileCacher:
                              callback=callback,
                              plus=plus,
                              bind_obj=bind_obj)
+    sync_funcs.append('put_file_from_file')
 
-    @make_sync()
     def put_file_from_path(self, path, description="",
                            callback=None, plus=None, bind_obj=None):
         """Send a file to FileStorage keeping a copy locally. The file is
@@ -582,10 +597,10 @@ class FileCacher:
                              callback=callback,
                              plus=plus,
                              bind_obj=bind_obj)
+    sync_funcs.append('put_file_from_path')
 
     ## OTHER ROUTINES ##
 
-    @make_sync()
     def describe(self, digest,
                  callback=None, plus=None, bind_obj=None):
         """Return the description of a file given its digest. This request is not
@@ -603,6 +618,7 @@ class FileCacher:
                                           callback=callback,
                                           plus=plus,
                                           bind_obj=bind_obj)
+    sync_funcs.append('describe')
 
 if __name__ == "__main__":
     import sys

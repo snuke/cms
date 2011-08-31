@@ -289,7 +289,7 @@ class Service:
 
         """
         # Let's not spam the logs...
-        # logger.debug("Service._step")
+        #logger.debug("Service._step")
         with async_lock:
             asyncore.loop(0.02, True, None, 1)
         self._trigger()
@@ -428,6 +428,72 @@ class Service:
         return result
 
 
+    def make_sync(self, default_sync=False):
+
+        def decorator(func):
+
+            def newfunc(*args, **kwargs):
+
+                # Detects if the call is synchronous or not; deletes the
+                # sync key from the arguments (it must be a keyword
+                # argument)
+                if 'sync' not in kwargs:
+                    sync = default_sync
+                else:
+                    sync = kwargs['sync']
+                    del kwargs['sync']
+
+                # If the call is synchronous...
+                if sync:
+
+                    # The plus object is used to get information back from
+                    # the callback to the calling context; the callback
+                    # just has to copy the received data to the plus;
+                    # finished is the last thing, since it triggers the
+                    # continuation of the calling context
+                    plus = {'finished': False,
+                            'data':     None,
+                            'error':    None}
+
+                    @rpc_callback
+                    def sync_callback(context, data, plus, error=None):
+                        logger.debug("sync_callback: callback for sync function received")
+                        plus['data'] = data
+                        plus['error'] = error
+                        plus['finished'] = True
+
+                    # Do the call...
+                    func(callback=sync_callback,
+                         plus=plus,
+                         bind_obj=None,
+                         *args, **kwargs)
+
+                    # ...and wait for it to be finished, giving time to
+                    # other operations
+                    while not plus['finished']:
+                        self._step()
+
+                    # Return the data if no errors were raised; cast an
+                    # exception otherwise
+                    error = plus['error']
+                    data = plus['data']
+                    if error is not None:
+                        raise SyncRPCError(error)
+                    else:
+                        return data
+
+                # If the call is asynchronous, just do it (after having
+                # deleted the sync keyword argument)
+                else:
+                    if 'sync' in kwargs:
+                        del kwargs['sync']
+                    return func(*args, **kwargs)
+
+            return newfunc
+
+        return decorator
+
+
 class ThreadedRPC(threading.Thread):
     """In this class we run the computation of rpc methods defined
     with the @rpc_threaded decorator. The found_terminator method
@@ -492,70 +558,14 @@ class SyncRPCError(Exception):
 class SyncRPCConnectError(SyncRPCError):
     pass
 
-def make_sync(default_sync=False):
+def ignore_sync(func):
 
-    def decorator(func):
+    def newfunc(*args, **kwargs):
+        if 'sync' in kwargs:
+            del kwargs['sync']
+        func(*args, **kwargs)
 
-        def newfunc(*args, **kwargs):
-
-            # Detects if the call is synchronous or not; deletes the
-            # sync key from the arguments (it must be a keyword
-            # argument)
-            if 'sync' not in kwargs:
-                sync = default_sync
-            else:
-                sync = kwargs['sync']
-                del kwargs['sync']
-
-            # If the call is synchronous...
-            if sync:
-
-                # The plus object is used to get information back from
-                # the callback to the calling context; the callback
-                # just has to copy the received data to the plus;
-                # finished is the last thing, since it triggers the
-                # continuation of the calling context
-                plus = {'finished': False,
-                        'data':     None,
-                        'error':    None}
-
-                @rpc_callback
-                def sync_callback(context, data, plus, error=None):
-                    logger.debug("sync_callback: callback for sync function received")
-                    plus['data'] = data
-                    plus['error'] = error
-                    plus['finished'] = True
-
-                # Do the call...
-                func(callback=sync_callback,
-                     plus=plus,
-                     bind_obj=None,
-                     *args, **kwargs)
-
-                # ...and wait for it to be finished, giving time to
-                # other operations
-                while not plus['finished']:
-                    asyncore.loop(0.02, True, None, 1)
-
-                # Return the data if no errors were raised; cast an
-                # exception otherwise
-                error = plus['error']
-                data = plus['data']
-                if error is not None:
-                    raise SyncRPCError(error)
-                else:
-                    return data
-
-            # If the call is asynchronous, just do it (after having
-            # deleted the sync keyword argument)
-            else:
-                if 'sync' in kwargs:
-                    del kwargs['sync']
-                return func(*args, **kwargs)
-
-        return newfunc
-
-    return decorator
+    return newfunc
 
 class RemoteService(asynchat.async_chat):
     """This class mimick the local presence of a remote service. A
@@ -599,6 +609,11 @@ class RemoteService(asynchat.async_chat):
             self.address = address
         self.connected = False
         self.data = []
+
+        if self.service is not None:
+            self.execute_rpc = self.service.make_sync(default_sync=False)(self.execute_rpc)
+        else:
+            self.execute_rpc = ignore_sync(self.execute_rpc)
 
     def _initialize_channel(self, sock):
         """When we have a socket, we configure the channel using this
@@ -716,7 +731,6 @@ class RemoteService(asynchat.async_chat):
             return
         self._push_right(json_length + json_message + binary_message)
 
-    @make_sync(default_sync=False)
     def execute_rpc(self, method, data,
                     callback=None, plus=None, bind_obj=None):
         """Method to send an RPC request to the remote service.
@@ -921,7 +935,8 @@ class Logger:
         SEV_CRITICAL,
         SEV_ERROR,
         SEV_WARNING,
-        SEV_INFO
+        SEV_INFO,
+#        SEV_DEBUG
         ]
     # FIXME - SEV_DEBUG cannot be added to TO_SEND, otherwise we enter
     # an infinite loop
