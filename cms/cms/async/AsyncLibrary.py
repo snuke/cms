@@ -168,9 +168,12 @@ class Service:
         logger.debug("Service.__init__")
         signal.signal(signal.SIGINT, lambda x, y: self.exit())
         self.shard = shard
-        # Stores the function to call periodically. Format: function
+        # Stores the functions to call periodically. Format: function
         # -> [plus_obj, interval_in_seconds, time of last call]
         self._timeouts = {}
+        # Stores the functions to call once. Format: (function,
+        # arguments, keyword arguments)
+        self._deferreds = []
         # If we want to exit the main loop
         self._exit = False
         # The return values of the rpc calls executed in a different
@@ -245,6 +248,21 @@ class Service:
             last -= seconds
         self._timeouts[func] = [plus, seconds, last]
 
+    def add_deferred(self, func, args=None, kwargs=None):
+        """Register a deferred function, i.e., a function that has to
+        be called once and as soon as possible by the asyncore cycle.
+
+        func (function): the functio to call.
+        args (list): the arguments for the function.
+        kwargs (dict): the keyword arguments for the function.
+
+        """
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+        self._deferreds.append((func, args, kwargs))
+
     def exit(self):
         """Terminate the service at the next step.
 
@@ -318,6 +336,15 @@ class Service:
                     ret = func(plus)
                 if not ret:
                     del self._timeouts[func]
+
+        # Execute the deferred functions: first copy the _deferreds
+        # array in a local copy (avoiding problems caused by adding
+        # new deferred functions while processing them), then act on
+        # the local copy
+        deferreds = self._deferreds
+        self._deferreds = []
+        for func, args, kwargs in deferreds:
+            func(*args, **kwargs)
 
     @rpc_method
     def echo(self, string):
