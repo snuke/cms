@@ -19,31 +19,46 @@
 
 import simplejson as json
 
+from sqlalchemy import Column, ForeignKey, UniqueConstraint, CheckConstraint, \
+     Boolean, Integer, String, Float, Interval
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm.collections import column_mapped_collection
+from sqlalchemy.ext.orderinglist import ordering_list
 
-class Job:
+from cms.db.SQLAlchemyUtils import Base
+
+
+class Job(Base):
+    __tablename__ = 'jobs'
+    __mapper_args__ = {'polymorphic_on': 'type'}
+
+    id = Column(Integer, primary_key=True)
+    type = Column(String, nullable=False)
+
     # Input
-    task_type = ""
-    task_type_parameters = []
+    task_type = Column(String, nullable=False)
+    task_type_parameters = Column(String, nullable=False)
 
     # Metadata
-    shard = None
-    sandboxes = []
-    info = ""
+    shard = Column(String, nullable=True)
+    sandboxes = Column(String, nullable=True)
+    info = Column(String, nullable=False)
 
 
 class CompilationJob(Job):
+    __mapper_args__ = {'polymorphic_identity': 'compilation'}
 
     # Input
-    language = ""
-    files = {}
-    managers = {}
+    language = Column(String, nullable=False)
+    #files = {}
+    #managers = {}
 
     # Output
-    success = None
-    compilation_success = None
-    executables = {}
-    text = None
-    plus = None
+    success = Column(Boolean, nullable=True)
+    compilation_success = Column(Boolean, nullable=True)
+    #executables = {}
+    text = Column(String, nullable=True)
+    plus = Column(String, nullable=True)
 
     @staticmethod
     def from_submission(submission):
@@ -64,12 +79,13 @@ class CompilationJob(Job):
 
 
 class EvaluationJob(Job):
+    __mapper_args__ = {'polymorphic_identity': 'evaluation'}
 
     # Input
     executables = {}
     testcases = {}
-    time_limit = None
-    memory_limit = None
+    time_limit = Column(Float, nullable=True)
+    memory_limit = Column(Float, nullable=True)
     managers = {}
     files = {}
 

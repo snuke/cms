@@ -22,7 +22,7 @@
 import simplejson as json
 
 from cms import logger, plugin_lookup
-from cms.grading.Job import Job
+from cms.db.Job import Job
 
 
 def get_task_type(job=None, file_cacher=None, task=None,

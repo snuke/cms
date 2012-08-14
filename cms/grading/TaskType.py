@@ -36,7 +36,7 @@ import traceback
 from cms import config, logger
 from cms.grading import JobException
 from cms.grading.Sandbox import Sandbox
-from cms.grading.Job import CompilationJob, EvaluationJob
+from cms.db.Job import CompilationJob, EvaluationJob
 
 
 ## Sandbox lifecycle. ##

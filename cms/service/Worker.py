@@ -29,7 +29,7 @@ from cms.db.FileCacher import FileCacher
 from cms.db.SQLAlchemyAll import Submission, SessionGen, Contest
 from cms.grading import JobException
 from cms.grading.tasktypes import get_task_type
-from cms.grading.Job import CompilationJob, EvaluationJob
+from cms.db.Job import CompilationJob, EvaluationJob
 
 
 class Worker(Service):

@@ -29,7 +29,7 @@ import time
 from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey, UniqueConstraint, \
-     Integer, String, Float, DateTime
+     Integer, String, Float, DateTime, CheckConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.orm.collections import column_mapped_collection
 from sqlalchemy.ext.orderinglist import ordering_list
@@ -37,6 +37,7 @@ from sqlalchemy.ext.orderinglist import ordering_list
 from cms.db.SQLAlchemyUtils import Base
 from cms.db.Task import Task
 from cms.db.User import User
+from cms.db.Job import Job
 from cmscommon.DateTime import make_datetime, make_timestamp
 
 
@@ -335,6 +336,10 @@ class File(Base):
     __table_args__ = (
         UniqueConstraint('submission_id', 'filename',
                          name='cst_files_submission_id_filename'),
+        UniqueConstraint('job_id', 'filename',
+                         name='cst_files_job_id_filename'),
+        CheckConstraint('NOT ((submission_id IS NULL) = (job_id IS NULL))',
+                        name="files_one_parent")
         )
 
     # Auto increment primary key.
@@ -344,14 +349,27 @@ class File(Base):
     filename = Column(String, nullable=False)
     digest = Column(String, nullable=False)
 
-    # Submission (id and object) of the submission.
+    # Submission (id and object) that owns this file
     submission_id = Column(Integer,
                            ForeignKey(Submission.id,
                                       onupdate="CASCADE", ondelete="CASCADE"),
-                           nullable=False,
+                           nullable=True,
                            index=True)
     submission = relationship(
         Submission,
+        backref=backref('files',
+                        collection_class=column_mapped_collection(filename),
+                        single_parent=True,
+                        cascade="all, delete, delete-orphan"))
+
+    # Otherwise, Job that owns this file
+    job_id = Column(Integer,
+                    ForeignKey(Job.id,
+                               onupdate="CASCADE", ondelete="CASCADE"),
+                    nullable=True,
+                    index=True)
+    job = relationship(
+        Job,
         backref=backref('files',
                         collection_class=column_mapped_collection(filename),
                         single_parent=True,

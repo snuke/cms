@@ -35,6 +35,7 @@ from sqlalchemy.ext.orderinglist import ordering_list
 
 from cms.db.SQLAlchemyUtils import Base
 from cms.db.Contest import Contest
+from cms.db.Job import Job
 
 
 class Task(Base):
@@ -389,7 +390,7 @@ class SubmissionFormatElement(Base):
     task_id = Column(Integer,
                      ForeignKey(Task.id,
                                 onupdate="CASCADE", ondelete="CASCADE"),
-                     nullable=False,
+                     nullable=True,
                      index=True)
     task = relationship(Task,
                         backref=backref('submission_format',
