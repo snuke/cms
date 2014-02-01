@@ -175,6 +175,7 @@ class ImojudgeLoader(Loader):
 
         """
 
+        conf = self.tasks_conf[name]
         path = os.path.realpath(os.path.join(self.path, name))
 
         # If there is no .itime file, we assume that the task has changed
@@ -188,44 +189,49 @@ class ImojudgeLoader(Loader):
         # Generate a task's list of files
         # Testcases
         files = []
-        for filename in os.listdir(os.path.join(path, "input")):
-            files.append(os.path.join(path, "input", filename))
+        for filename in os.listdir(os.path.join(path, "in")):
+            files.append(os.path.join(path, "in", filename))
 
-        for filename in os.listdir(os.path.join(path, "output")):
-            files.append(os.path.join(path, "output", filename))
+        for filename in os.listdir(os.path.join(path, "out")):
+            files.append(os.path.join(path, "out", filename))
 
-        # Attachments
-        if os.path.exists(os.path.join(path, "att")):
-            for filename in os.listdir(os.path.join(path, "att")):
-                files.append(os.path.join(path, "att", filename))
+        # # Attachments
+        # if os.path.exists(os.path.join(path, "att")):
+        #     for filename in os.listdir(os.path.join(path, "att")):
+        #         files.append(os.path.join(path, "att", filename))
 
         # Score file
-        files.append(os.path.join(path, "gen", "GEN"))
+        files.append(os.path.join(path, "etc", "score.txt"))
 
         # Statement
-        files.append(os.path.join(path, "statement", "statement.pdf"))
-        files.append(os.path.join(path, "testo", "testo.pdf"))
+        files.append(os.path.join(path, "task", name + "pdf"))
 
         # Managers
-        files.append(os.path.join(path, "check", "checker"))
-        files.append(os.path.join(path, "cor", "correttore"))
-        files.append(os.path.join(path, "check", "manager"))
-        files.append(os.path.join(path, "cor", "manager"))
+        files.append(os.path.join(path, "cms", "checker"))
+        files.append(os.path.join(path, "cms", "manager"))
         for lang in LANGUAGES:
             files.append(os.path.join(path, "cms", "grader.%s" % lang))
-        for other_filename in os.listdir(os.path.join(path, "cms")):
-            if other_filename.endswith('.h') or \
-                    other_filename.endswith('lib.pas'):
-                files.append(os.path.join(path, "cms", other_filename))
-
-        # Yaml
-        files.append(os.path.join(self.path, name + ".yaml"))
+        if os.path.exists(os.path.join(path, "cms")):
+            for other_filename in os.listdir(os.path.join(path, "cms")):
+                if other_filename.endswith('.h') or \
+                        other_filename.endswith('lib.pas'):
+                    files.append(os.path.join(path, "cms", other_filename))
 
         # Check is any of the files have changed
         for fname in files:
             if os.path.exists(fname):
                 if getmtime(fname) > itime:
                     return True
+
+        # Config
+        if os.path.exists(os.path.join(path, "config.cache")):
+            conf_cache = json.load(
+                io.open(os.path.join(path, "config.cache"),
+                        "rt", encoding="utf-8"))
+            if conf_cache != conf:
+                return True
+        else:
+            return True
 
         if os.path.exists(os.path.join(path, ".import_error")):
             logger.warning("Last attempt to import task %s failed,"
@@ -274,6 +280,10 @@ class ImojudgeLoader(Loader):
         touch(os.path.join(task_path, ".itime"))
         # If this file is not deleted, then the import failed
         touch(os.path.join(task_path, ".import_error"))
+
+        with open(os.path.join(task_path, "config.cache"),
+                    "w") as config_cache:
+            json.dump(conf, config_cache)
 
         args = {}
 
@@ -452,7 +462,7 @@ class ImojudgeLoader(Loader):
                 }]
             feedback = None
 
-        if feedback is not None:
+        if feedback is None:
             feedback = testcases
 
         args["score_type"] = "NamedGroup"
