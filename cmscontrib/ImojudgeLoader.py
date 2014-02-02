@@ -30,7 +30,9 @@ import os
 import os.path
 import re
 import sys
+import tempfile
 import yaml
+import zipfile
 from datetime import timedelta
 
 from cms import LANGUAGES
@@ -187,18 +189,27 @@ class ImojudgeLoader(Loader):
         itime = getmtime(os.path.join(path, ".itime"))
 
         # Generate a task's list of files
-        # Testcases
         files = []
+        # files.append(os.path.join(path))
+
+        # Testcases
+        files.append(os.path.join(path, "in"))
         for filename in os.listdir(os.path.join(path, "in")):
             files.append(os.path.join(path, "in", filename))
 
+        files.append(os.path.join(path, "out"))
         for filename in os.listdir(os.path.join(path, "out")):
             files.append(os.path.join(path, "out", filename))
 
-        # # Attachments
-        # if os.path.exists(os.path.join(path, "att")):
-        #     for filename in os.listdir(os.path.join(path, "att")):
-        #         files.append(os.path.join(path, "att", filename))
+        # Attachments
+        files.append(os.path.join(path, "att"))
+        if os.path.exists(os.path.join(path, "att")):
+            for filename in os.listdir(os.path.join(path, "att")):
+                files.append(os.path.join(path, "att", filename))
+        files.append(os.path.join(path, "dist"))
+        if os.path.exists(os.path.join(path, "dist")):
+            for filename in os.listdir(os.path.join(path, "dist")):
+                files.append(os.path.join(path, "dist", filename))
 
         # Score file
         files.append(os.path.join(path, "etc", "score.txt"))
@@ -208,10 +219,13 @@ class ImojudgeLoader(Loader):
 
         # Managers
         files.append(os.path.join(path, "cms", "checker"))
+        files.append(os.path.join(path, "cms", "checker.cpp"))
         files.append(os.path.join(path, "cms", "manager"))
+        files.append(os.path.join(path, "cms", "manager.cpp"))
         for lang in LANGUAGES:
             files.append(os.path.join(path, "cms", "grader.%s" % lang))
         if os.path.exists(os.path.join(path, "cms")):
+            files.append(os.path.join(path, "cms"))
             for other_filename in os.listdir(os.path.join(path, "cms")):
                 if other_filename.endswith('.h') or \
                         other_filename.endswith('lib.pas'):
@@ -273,6 +287,21 @@ class ImojudgeLoader(Loader):
         """
         conf = self.tasks_conf[name]
         task_path = os.path.join(self.path, conf["dir"])
+
+        getmtime = lambda fname: os.stat(fname).st_mtime
+        compilation_pairs = [
+                [os.path.join(task_path, "cms", "manager.cpp"),
+                 os.path.join(task_path, "cms", "manager")],
+                [os.path.join(task_path, "cms", "checker.cpp"),
+                 os.path.join(task_path, "cms", "checker")]]
+        for src,dst in compilation_pairs:
+            if os.path.exists(src):
+                has_src_changed = True
+                if os.path.exists(dst):
+                    has_src_changed = getmtime(src) > getmtime(dst)
+                if has_src_changed:
+                    logger.info("Auto-generation for %s." % dst)
+                    os.system("g++ -O2 -Wall -static %s -lm -o %s" % (src,dst))
 
         logger.info("Loading parameters for task %s." % name)
 
@@ -342,6 +371,18 @@ class ImojudgeLoader(Loader):
                     os.path.join(task_path, "att", filename),
                     "Attachment %s for task %s" % (filename, name))
                 args["attachments"] += [Attachment(filename, digest)]
+
+        if os.path.exists(os.path.join(task_path, "dist")):
+            zfn = tempfile.mkstemp("imojudge-loader-", ".zip")
+            with zipfile.ZipFile(zfn[1], 'w', zipfile.ZIP_STORED) as zf:
+                for filename in os.listdir(os.path.join(task_path, "dist")):
+                    zf.write(os.path.join(task_path, "dist", filename),
+                             os.path.join(name, filename))
+            digest = self.file_cacher.put_file_from_path(
+                zfn[1],
+                "Distribution archive for task %s" % name)
+            args["attachments"] += [Attachment(name + ".zip", digest)]
+            os.remove(zfn[1])
 
         task = Task(**args)
 
