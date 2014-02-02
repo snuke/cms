@@ -165,8 +165,8 @@ class ImojudgeLoader(Loader):
         self.users_conf = dict((user['username'], user)
                                for user
                                in conf["users"])
-        tasks = self.tasks_conf.keys()
-        users = self.users_conf.keys()
+        tasks = [task['name'] for task in conf["tasks"]]
+        users = [user['username'] for user in conf["users"]]
 
         return Contest(**args), tasks, users
 
