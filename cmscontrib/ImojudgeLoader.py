@@ -157,6 +157,11 @@ class ImojudgeLoader(Loader):
         load(conf, args, "min_submission_interval", conv=make_timedelta)
         load(conf, args, "min_user_test_interval", conv=make_timedelta)
 
+        load(conf, args, "languages")
+        if "languages" in args:
+            for l in args["languages"]:
+                assert l in LANGUAGES
+
         logger.info("Contest parameters loaded.")
 
         for num, task in enumerate(conf["tasks"]):
