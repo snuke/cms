@@ -105,6 +105,10 @@ summary
         \subsection*{ {{ task["title"] }} }
 
         \\begin{description}
+            \\item[------]
+            \\makebox[8mm]{ 結果 }
+            \\makebox[14mm]{ 時間 }
+            \\makebox[14mm]{ メモリ }
         {% for testcase in task["testcases"] %}
             \\item[{{ testcase["name"] }}]
             \\makebox[8mm]{ {{ testcase["text"] }} } {% if testcase["text"] != "N/A" %}
