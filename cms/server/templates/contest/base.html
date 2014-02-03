@@ -189,7 +189,9 @@ $(document).ready(function () {
                         </div>
                     </fieldset>
                 </form>
+                {% if registration_form %}
                 <p><a href="{{ url_root }}/register">{{ _("Register") }}</a></p>
+                {% end %}
             </div>
         </div>
 {% else %}
