@@ -95,7 +95,7 @@ class NamedGroup(ScoreTypeAlone):
     {% end %}
     <div class="subtask-head">
         <span class="title">
-            {{ _("Subtask %d") % st["idx"] }}
+            {{ st["name"] }}
         </span>
     {% if "score" in st and "max_score" in st %}
         <span class="score">
@@ -223,7 +223,7 @@ class NamedGroup(ScoreTypeAlone):
                 else:
                     public_testcases.append({"f": f})
             subtasks.append({
-                "idx": st_idx + 1,
+                "name": parameter['name'],
                 "score": st_score,
                 "max_score": parameter['score'],
                 "testcases": testcases,
@@ -232,7 +232,7 @@ class NamedGroup(ScoreTypeAlone):
                 public_subtasks.append(subtasks[-1])
             else:
                 public_subtasks.append({
-                    "idx": st_idx + 1,
+                    "name": parameter['name'],
                     "testcases": public_testcases,
                     })
 
