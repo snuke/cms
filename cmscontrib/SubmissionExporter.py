@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Programming contest management system
-# Copyright © 2010-2012 Giovanni Mascellani <mascellani@poisson.phc.unipi.it>
-# Copyright © 2010-2012 Stefano Maggiolo <s.maggiolo@gmail.com>
-# Copyright © 2010-2012 Matteo Boscariol <boscarim@hotmail.com>
-# Copyright © 2012 Masaki Hara <ackie.h.gmai@gmail.com>
+# Copyright © 2014 Masaki Hara <ackie.h.gmai@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -27,6 +24,7 @@ idempotent.
 """
 
 import argparse
+import logging
 import os
 import shutil
 import simplejson as json
@@ -35,12 +33,13 @@ import codecs
 
 import tarfile
 
-from cms import logger
-from cms.db import ask_for_contest
-from cms.db.FileCacher import FileCacher
-from cms.db.SQLAlchemyAll import SessionGen, Contest
+from cms.db import SessionGen, Contest, ask_for_contest
+from cms.db.filecacher import FileCacher
 
 from cmscontrib import sha1sum
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_archive_info(file_name):
@@ -93,7 +92,7 @@ class SubmissionExporter:
 
         # If target is not provided, we use the contest's name.
         if export_target == "":
-            with SessionGen(commit=False) as session:
+            with SessionGen() as session:
                 contest = Contest.get_from_id(self.contest_id, session)
                 self.export_target = "submissions_%s.tar.gz" % contest.name
         else:
@@ -135,7 +134,7 @@ class SubmissionExporter:
         submissions_dir = os.path.join(export_dir, "submissions")
         os.mkdir(submissions_dir)
 
-        with SessionGen(commit=False) as session:
+        with SessionGen() as session:
 
             contest = Contest.get_from_id(self.contest_id, session)
 
@@ -160,8 +159,9 @@ class SubmissionExporter:
                     if submission.language is not None:
                         filename = filename.replace("%l", submission.language)
 
-                    submission_file = os.path.join(submission_dir, filename)
-                    self.file_cacher.get_file(filedata.digest, path=submission_file)
+                    self.file_cacher.get_file_to_path(
+                        filedata.digest,
+                        os.path.join(submission_dir, filename))
 
         # If the admin requested export to file, we do that.
         if archive_info["write_mode"] != "":
