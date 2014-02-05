@@ -47,11 +47,28 @@ def tex_escape(s):
         if x == '#' or x == '$' or x == '%' or x == '&' or x == '_' or \
                 x == '{' or x == '}' :
             ret.append("\\")
-        if x == '\\' or x == '|' or x == '*' or x == '<' or x == '>' or \
+        # if x == '\\' or x == '|' or x == '*' or x == '<' or x == '>' or \
+        if x == '\\' or x == '|' or x == '<' or x == '>' or \
                 x == '^' or x == '~' :
             ret.append("\\char'\\")
         ret.append(x)
     return u"".join(ret)
+
+def testcase_prefixes(testcases_all, testcases):
+    prefixes = []
+    for pref_testcase in testcases:
+        for i in range(len(pref_testcase)):
+            if i > 0 and pref_testcase[i-1] != '-':
+                continue
+            prefix = pref_testcase[0:i]
+            if all(testcase in testcases
+                    for testcase in testcases_all
+                    if testcase.startswith(prefix)):
+                prefixes.append(prefix + u"*")
+                testcases = \
+                        [testcase for testcase in testcases
+                                if not testcase.startswith(prefix)]
+    return prefixes + testcases
 
 class SummaryFormatter(object):
 
@@ -121,6 +138,7 @@ summary
         \\begin{description}
         {% for subtask in task["subtasks"] %}
             \\item[{{ subtask["name"] }}]
+            {{ u",".join(subtask["testcases"]) }}
             {{ "%g" % subtask["score"] }}/{{ "%g" % subtask["max_score"] }}
         {% end %}
         \\end{description}
@@ -196,11 +214,13 @@ summary
                     if t_submission is None:
                         testcases_data = []
                         task_data["testcases"] = testcases_data
+                        all_testcases = []
                         for testcase in session.query(Testcase)\
                                 .filter(Testcase.dataset
                                         == task.active_dataset)\
                                 .order_by(Testcase.codename).all():
                             t_data = {}
+                            all_testcases.append(testcase.codename)
                             testcases_data.append(t_data)
                             t_data["name"] = testcase.codename
                             t_data["outcome"] = 0.0
@@ -215,15 +235,19 @@ summary
                             subtask_data["name"] = subtask["name"]
                             subtask_data["score"] = 0.0
                             subtask_data["max_score"] = float(subtask["score"])
+                            subtask_data["testcases"] = \
+                                    testcase_prefixes(all_testcases, subtask["files"])
                             subtasks_data.append(subtask_data)
                     else:
                         testcases_data = []
                         task_data["testcases"] = testcases_data
+                        all_testcases = []
                         for testcase in session.query(Testcase)\
                                 .filter(Testcase.dataset
                                         == task.active_dataset)\
                                 .order_by(Testcase.codename).all():
                             t_data = {}
+                            all_testcases.append(testcase.codename)
                             testcases_data.append(t_data)
                             ev = session.query(Evaluation)\
                                     .filter(Evaluation.submission_result \
@@ -258,6 +282,10 @@ summary
                             subtask_data["name"] = subtask["name"]
                             subtask_data["score"] = float(subtask["score"])
                             subtask_data["max_score"] = float(subtask["max_score"])
+                            subtask_data["testcases"] = \
+                                    testcase_prefixes(all_testcases,
+                                            [tc["file"] for tc
+                                                in subtask["testcases"]])
                             subtasks_data.append(subtask_data)
                     user_data["tasks"].append(task_data)
                 user_data["score"] = round(score, contest.score_precision)
