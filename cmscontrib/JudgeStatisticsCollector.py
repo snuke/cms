@@ -43,7 +43,7 @@ from cms.grading.scoretypes import NamedGroup, get_score_type
 logger = logging.getLogger(__name__)
 
 
-class JudgeStatisticsCollecter(object):
+class JudgeStatisticsCollector(object):
 
     """
 
@@ -242,7 +242,7 @@ def main():
     if args.contest_id is None:
         args.contest_id = ask_for_contest()
 
-    JudgeStatisticsCollecter(contest_id=args.contest_id,
+    JudgeStatisticsCollector(contest_id=args.contest_id,
             export_target=args.export_target).do_export()
 
 
