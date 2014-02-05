@@ -83,9 +83,9 @@ class NamedGroup(ScoreTypeAlone):
 {% from cms.server import format_size %}
 {% for st in details %}
     {% if "score" in st and "max_score" in st %}
-        {% if st["score"] >= st["max_score"] %}
+        {% if st["reduced_outcome"] >= 1.0 %}
 <div class="subtask correct">
-        {% elif st["score"] <= 0.0 %}
+        {% elif st["reduced_outcome"] <= 0.0 %}
 <div class="subtask notcorrect">
         {% else %}
 <div class="subtask partiallycorrect">
@@ -197,9 +197,10 @@ class NamedGroup(ScoreTypeAlone):
         ranking_details = []
 
         for st_idx, parameter in enumerate(self.parameters):
-            st_score = self.reduce((float(evaluations[f].outcome)
-                                    for f in parameter['files']),
-                                   parameter) * parameter['score']
+            st_reduced_outcome = self.reduce((float(evaluations[f].outcome)
+                for f in parameter['files']),
+                parameter)
+            st_score = st_reduced_outcome * parameter['score']
             st_public = all(self.public_testcases[f]
                             for f in parameter['files'])
             tc_outcomes = dict((
@@ -224,6 +225,7 @@ class NamedGroup(ScoreTypeAlone):
                     public_testcases.append({"f": f})
             subtasks.append({
                 "name": parameter['name'],
+                "reduced_outcome": st_reduced_outcome,
                 "score": st_score,
                 "max_score": parameter['score'],
                 "testcases": testcases,
