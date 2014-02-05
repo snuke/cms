@@ -142,6 +142,7 @@ def do_setup():
                   "cmsReimporter=cmscontrib.Reimporter:main",
                   "cmsSpoolExporter=cmscontrib.SpoolExporter:main",
                   "cmsSummaryFormatter=cmscontrib.SummaryFormatter:main",
+                  "cmsJudgeStatisticsCollecter=cmscontrib.JudgeStatisticsCollecter:main",
                   "cmsContestExporter=cmscontrib.ContestExporter:main",
                   "cmsContestImporter=cmscontrib.ContestImporter:main",
                   "cmsDumpUpdater=cmscontrib.DumpUpdater:main",
