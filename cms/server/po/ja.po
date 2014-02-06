@@ -95,7 +95,7 @@ msgid "Invalid files in submission"
 msgstr "提出物の中に無効なファイルがあります"
 
 msgid "No compilation needed"
-msgstr "コンパイルの必要なし"
+msgstr "コンパイルの必要はありません"
 
 msgid "File not submitted"
 msgstr "ファイルが提出されていません"
@@ -111,28 +111,28 @@ msgstr "あなたの質問は受理されました。回答があった場合は
 #, python-format
 msgid ""
 "You have reached the maximum limit of at most %d submissions among all tasks."
-msgstr "全課題を通して最大 %d 回の提出制限に達しました。"
+msgstr "全課題を通して最大 %d 回までという提出回数の上限に達しました。"
 
 #, python-format
 msgid ""
 "You have reached the maximum limit of at most %d submissions on this task."
-msgstr "この課題に関して最大 %d 回の提出制限に達しました。"
+msgstr "この課題に関して最大 %d 回までという提出回数の上限に達しました。"
 
 msgid "Too many submissions!"
-msgstr "提出が多すぎです！"
+msgstr "提出が多すぎます！"
 
 #, python-format
 msgid ""
 "Among all tasks, you can submit again after %d seconds from last submission."
-msgstr "全課題を通して、最後の提出から %d 秒間は解答を提出することはできません。"
+msgstr "全課題を通して、最後の提出から %d 秒間は解答を提出することができません。"
 
 #, python-format
 msgid ""
 "For this task, you can submit again after %d seconds from last submission."
-msgstr "この課題に関して、最後の提出から %d 秒間は解答を提出することはできません。"
+msgstr "この課題に関して、最後の提出から %d 秒間は解答を提出することができません。"
 
 msgid "Submissions too frequent!"
-msgstr "提出が頻繁すぎます！"
+msgstr "提出の頻度が高すぎます！"
 
 msgid "Invalid submission format!"
 msgstr "無効な提出形式です！"
@@ -147,7 +147,7 @@ msgid "The submitted archive could not be opened."
 msgstr "提出されたアーカイブを開くことができませんでした。"
 
 msgid "Cannot recognize submission's language."
-msgstr "提出物のプログラミング言語を判定することができません。"
+msgstr "提出ファイルのプログラミング言語を判定することができません。"
 
 msgid "All sources must be in the same language."
 msgstr "全てのソースコードは同じプログラミング言語でなければなりません。"
@@ -160,23 +160,23 @@ msgid "Invalid submission!"
 msgstr "無効な提出です！"
 
 msgid "Submission too big!"
-msgstr "提出物が大きすぎます！"
+msgstr "提出ファイルが大きすぎます！"
 
 #, python-format
 msgid "Each source file must be at most %d bytes long."
 msgstr "各ソースファイルは %d バイト以下である必要があります。"
 
 msgid "Submission storage failed!"
-msgstr "提出物の保存に失敗しました！"
+msgstr "提出ファイルの保存に失敗しました！"
 
 msgid "Please try again."
 msgstr "もう一度試してください。"
 
 msgid "Submission received"
-msgstr "提出物を受理しました"
+msgstr "提出を受理しました"
 
 msgid "Your submission has been received and is currently being evaluated."
-msgstr "あなたの提出物は受理されました。提出物の評価が行われています。"
+msgstr "あなたの提出は受理されました。提出ファイルの評価が行われています。"
 
 msgid "Token request discarded"
 msgstr "トークン要求は破棄されました"
@@ -187,14 +187,14 @@ msgstr "有効なトークンが存在しないため、あなたの要求は破
 msgid ""
 "Your request has been discarded because you already used a token on that "
 "submission."
-msgstr "この提出物には既にトークンが使用されているため、"
+msgstr "この提出には既にトークンが使用されているため、"
 "あなたの要求は破棄されました。"
 
 msgid "Token request received"
 msgstr "トークン要求を受理しました"
 
 msgid "Your request has been received and applied to the submission."
-msgstr "あなたの要求は受理され、トークンが提出物に適用されました。"
+msgstr "あなたの要求は受理され、トークンが提出に適用されました。"
 
 msgid "Compiling..."
 msgstr "コンパイルしています…"
@@ -213,11 +213,11 @@ msgstr "評価完了"
 
 #, python-format
 msgid "You have reached the maximum limit of at most %d tests among all tasks."
-msgstr "全課題を通して最大 %d 回のテスト回数制限に達しました。"
+msgstr "全課題を通して最大 %d 回までというテスト回数の上限に達しました。"
 
 #, python-format
 msgid "You have reached the maximum limit of at most %d tests on this task."
-msgstr "この課題に関して最大 %d 回のテスト回数制限に達しました。"
+msgstr "この課題に関して最大 %d 回までというテスト回数の上限に達しました。"
 
 msgid "Too many tests!"
 msgstr "テストの行いすぎです！"
@@ -225,15 +225,15 @@ msgstr "テストの行いすぎです！"
 #, python-format
 msgid "Among all tasks, you can test again after %d seconds from last test."
 msgstr "全課題を通して、"
-"最後の提出から %d 秒間はテストを実行することはできません。"
+"最後の提出から %d 秒間はテストを実行することができません。"
 
 #, python-format
 msgid "For this task, you can test again after %d seconds from last test."
 msgstr "この課題に関して、"
-"最後の提出から %d 秒間はテストを実行することはできません。"
+"最後の提出から %d 秒間はテストを実行することができません。"
 
 msgid "Tests too frequent!"
-msgstr "テストを頻繁にしすぎです！"
+msgstr "テストの頻度が高すぎます！"
 
 msgid "Invalid test format!"
 msgstr "無効なテスト形式です！"
@@ -242,7 +242,7 @@ msgid "Cannot recognize test's language."
 msgstr "テストのプログラミング言語を判定することができません。"
 
 msgid "Invalid test!"
-msgstr "無効なテスト！"
+msgstr "無効なテストです！"
 
 msgid "Test too big!"
 msgstr "テストが大きすぎます！"
@@ -311,7 +311,7 @@ msgstr ""
 
 #, python-format
 msgid "more than %s"
-msgstr "以上"
+msgstr "%sよりも多い"
 
 msgid "contest-token"
 msgstr "コンテストトークン"
@@ -559,7 +559,7 @@ msgid "You have an infinite number of tokens."
 msgstr "無限個のトークンが使用できます。"
 
 msgid "You can see the detailed result of a submission by using a token on it."
-msgstr "提出物に対する結果の詳細は、"
+msgstr "提出に対する結果の詳細は、"
 "トークンを使用することによって見ることができます。"
 
 msgid ""
@@ -588,7 +588,7 @@ msgstr "全ての課題で共通の<em>コンテストトークン</em>と"
 msgid ""
 "You can see the detailed result of a submission by using two tokens on it, "
 "one of each type."
-msgstr "提出物に対する結果の詳細は、二種類のトークンを一つずつ、"
+msgstr "提出に対する結果の詳細は、二種類のトークンを一つずつ、"
 "合計二つのトークンを使用することによって見ることができます。"
 
 #, python-format
@@ -629,10 +629,10 @@ msgstr "あなたの時間枠は%(start_time)sに始まりました。"
 "この時間枠は既に終了しています。"
 
 msgid "There's nothing you can do now."
-msgstr "あなたにできることはありません。"
+msgstr "現在あなたができることはありません。"
 
 msgid "You never started your time frame. Now it's too late."
-msgstr "あなたが時間枠を始めることはありませんでした。もはや手遅れです。"
+msgstr "あなたは時間枠を始めませんでした。残り時間が足りないため、今から始めることはできません。"
 
 msgid "Start!"
 msgstr "開始！"
@@ -704,10 +704,10 @@ msgid "Download"
 msgstr "ダウンロード"
 
 msgid "Played"
-msgstr "おしまい"
+msgstr "公開済"
 
 msgid "Play!"
-msgstr "遊ぶ！"
+msgstr "開ける！"
 
 msgid "Wait..."
 msgstr "お待ちください…"
@@ -723,7 +723,7 @@ msgid "no statement available"
 msgstr "問題文がありません"
 
 msgid "Download task statement"
-msgstr "問題文をダウンロード"
+msgstr "問題文をダウンロードする"
 
 msgid ""
 "The statement for this task is available in multiple versions, in different "
@@ -770,7 +770,7 @@ msgstr "%(type_pl)sの使用に関する規則は、<a href=\"%(url_root)s/"
 msgid ""
 "Remeber that to see the detailed result of a submission you need to use both "
 "a contest-token and a task-token."
-msgstr "提出物に対する結果の詳細を見るためには、"
+msgstr "提出に対する結果の詳細を見るためには、"
 "コンテストトークンと課題トークンの両方を"
 "使用する必要があることに注意してください。"
 
@@ -791,7 +791,7 @@ msgid "submission.zip"
 msgstr ""
 
 msgid "Previous submissions"
-msgstr "以前の提出物"
+msgstr "以前の提出"
 
 msgid "Right now, you have infinite tokens available on this task."
 msgstr "現在、この課題では無限個のトークンが使用できます。"
@@ -868,7 +868,7 @@ msgid "Output"
 msgstr "出力"
 
 msgid "no tests yet"
-msgstr "またテストはありません"
+msgstr "まだテストはありません"
 
 msgid "Test details"
 msgstr "テストの詳細"
