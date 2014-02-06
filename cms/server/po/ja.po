@@ -33,7 +33,7 @@ msgstr "コンパイル時間超過"
 msgid ""
 "Compilation killed with signal %d (could be triggered by violating memory "
 "limits)"
-msgstr "コンパイラはシグナル %d を受け取って異常終了しました。"
+msgstr "コンパイラはシグナル %d を受け取って異常終了しました"
 "(メモリ制限違反が原因かもしれません)"
 
 msgid "Execution timed out"
@@ -43,28 +43,28 @@ msgstr "実行時間超過"
 msgid ""
 "Execution killed with signal %d (could be triggered by violating memory "
 "limits)"
-msgstr "プログラムはシグナル %d を受け取って異常終了しました。"
+msgstr "プログラムはシグナル %d を受け取って異常終了しました"
 "(メモリ制限違反が原因かもしれません)"
 
 #, python-format
 msgid "Execution killed because of forbidden syscall %s"
-msgstr "禁止されたシステムコール %s を使用したため、プログラムは強制終了されました。"
+msgstr "禁止されたシステムコール %s を使用したため、プログラムは強制終了されました"
 
 msgid "Execution killed because of forbidden file access"
-msgstr "禁止されたファイルアクセスを行ったため、プログラムは強制終了されました。"
+msgstr "禁止されたファイルアクセスを行ったため、プログラムは強制終了されました"
 
 msgid "Execution failed because the return code was nonzero"
-msgstr "戻り値がゼロでなかったため、実行に失敗しました。"
+msgstr "戻り値がゼロでなかったため、実行に失敗しました"
 
 msgid "Output is correct"
-msgstr "出力は正しいです。"
+msgstr "出力は正しいです"
 
 msgid "Output isn't correct"
-msgstr "出力は正しくありません。"
+msgstr "出力は正しくありません"
 
 #, python-format
 msgid "Evaluation didn't produce file %s"
-msgstr "評価システムがファイル %s を生成しませんでした。"
+msgstr "評価システムがファイル %s を生成しませんでした"
 
 #, python-format
 msgid "Subtask %d"
@@ -179,7 +179,7 @@ msgid "Your submission has been received and is currently being evaluated."
 msgstr "あなたの提出物は受理されました。提出物の評価が行われています。"
 
 msgid "Token request discarded"
-msgstr "トークン要求は破棄されました。"
+msgstr "トークン要求は破棄されました"
 
 msgid "Your request has been discarded because you have no tokens available."
 msgstr "有効なトークンが存在しないため、あなたの要求は破棄されました。"
@@ -191,7 +191,7 @@ msgstr "この提出物には既にトークンが使用されているため、
 "あなたの要求は破棄されました。"
 
 msgid "Token request received"
-msgstr "トークン要求を受理しました。"
+msgstr "トークン要求を受理しました"
 
 msgid "Your request has been received and applied to the submission."
 msgstr "あなたの要求は受理され、トークンが提出物に適用されました。"
@@ -404,13 +404,13 @@ msgid ""
 "Logged in as <strong>%(first_name)s %(last_name)s</strong> <em>(%(username)s)"
 "</em>"
 msgstr "<strong>%(last_name)s %(first_name)s</strong> <em>(%(username)s)</em>"
-"としてログインしています。"
+"としてログインしています"
 
 msgid "Logout"
 msgstr "ログアウト"
 
 msgid "Failed to log in."
-msgstr "ログインに失敗しました。"
+msgstr "ログインに失敗しました"
 
 msgid "Welcome"
 msgstr "ようこそ"
@@ -844,7 +844,7 @@ msgid "Token"
 msgstr "トークン"
 
 msgid "no submissions yet"
-msgstr "まだ提出はありません。"
+msgstr "まだ提出はありません"
 
 msgid "Submission details"
 msgstr "提出の詳細"
@@ -868,7 +868,7 @@ msgid "Output"
 msgstr "出力"
 
 msgid "no tests yet"
-msgstr "またテストはありません。"
+msgstr "またテストはありません"
 
 msgid "Test details"
 msgstr "テストの詳細"
