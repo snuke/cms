@@ -63,6 +63,7 @@ from cms import SOURCE_EXT_TO_LANGUAGE_MAP, config, ServiceCoord
 from cms.io import WebService
 from cms.db import Session, Contest, User, Task, Question, Submission, Token, \
     File, UserTest, UserTestFile, UserTestManager
+from cms.db.user import generate_random_password
 from cms.db.filecacher import FileCacher
 from cms.grading.tasktypes import get_task_type
 from cms.grading.scoretypes import get_score_type
@@ -345,6 +346,9 @@ class BaseHandler(CommonRequestHandler):
         else:
             ret["tokens_tasks"] = 1  # all finite or mixed
 
+        ret["registration_form"] = config.registration_form
+        ret["registration_phase"] = False
+
         return ret
 
     def finish(self, *args, **kwds):
@@ -467,6 +471,86 @@ class DocumentationHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         self.render("documentation.html", **self.r_params)
+
+
+class RegisterHandler(BaseHandler):
+    """Register handler.
+
+    """
+    def get(self):
+        if not config.registration_form:
+            raise tornado.web.HTTPError(404)
+
+        self.r_params["registration_phase"] = True
+        self.r_params["registration_user"] = None
+        self.render("base.html", **self.r_params)
+
+    def post(self):
+        if not config.registration_form:
+            raise tornado.web.HTTPError(404)
+
+        first_name = self.get_argument("first_name", "")
+        last_name = self.get_argument("last_name", "")
+        username = self.get_argument("username", "")
+        next_page = self.get_argument("next", "/")
+
+        if username != filter_ascii(username):
+            logger.warning("Registration error: Cannot use that user name")
+            self.redirect("/register?register_error=mal")
+            return
+
+        user = self.sql_session.query(User)\
+            .filter(User.contest == self.contest)\
+            .filter(User.username == username).first()
+
+        if user is not None:
+            logger.warning("Registration error: the username already exists")
+            self.redirect("/register?register_error=dup")
+            return
+
+        user = User(first_name, last_name, username,
+                password=generate_random_password(),
+                contest=self.contest)
+        self.sql_session.add(user)
+        self.sql_session.commit()
+
+        self.r_params["registration_phase"] = True
+        self.r_params["registration_user"] = user
+        self.render("base.html", **self.r_params)
+
+
+class EditInfoHandler(BaseHandler):
+    """Provides form for editing user information.
+
+    """
+    @tornado.web.authenticated
+    def get(self):
+        if not config.registration_form:
+            raise tornado.web.HTTPError(404)
+        self.render("edit_info.html", **self.r_params)
+
+    @tornado.web.authenticated
+    def post(self):
+        if not config.registration_form:
+            raise tornado.web.HTTPError(404)
+
+        self.current_user.first_name = self.get_argument("first_name", "")
+        self.current_user.last_name = self.get_argument("last_name", "")
+        # self.sql_session.add(question)
+        self.sql_session.commit()
+
+        logger.info("User %s changed their information."
+                    % self.current_user.username)
+
+        # Add "All ok" notification.
+        self.application.service.add_notification(
+            self.current_user.username,
+            self.timestamp,
+            self._("Updated user information"),
+            self._("Your information has been changed."),
+            ContestWebServer.NOTIFICATION_SUCCESS)
+
+        self.redirect("/")
 
 
 class LoginHandler(BaseHandler):
@@ -1256,6 +1340,55 @@ class SubmissionStatusHandler(BaseHandler):
 
         self.write(data)
 
+class ViewSubmissionFilesHandler(BaseHandler):
+
+    refresh_cookie = False
+
+    @tornado.web.authenticated
+    @actual_phase_required(0)
+    def get(self, task_name, submission_num):
+        try:
+            task = self.contest.get_task(task_name)
+        except KeyError:
+            raise tornado.web.HTTPError(404)
+
+        submission = self.sql_session.query(Submission)\
+            .filter(Submission.user == self.current_user)\
+            .filter(Submission.task == task)\
+            .order_by(Submission.timestamp)\
+            .offset(int(submission_num) - 1).first()
+        if submission is None:
+            raise tornado.web.HTTPError(404)
+
+        files = []
+        for f in self.sql_session.query(File)\
+                .filter(File.submission == submission)\
+                .order_by(File.filename).all():
+            filename = f.filename
+            real_filename = filename.replace("%l", submission.language)
+
+            digest = f.digest
+
+            try:
+                temp_file = \
+                    self.application.service.file_cacher.get_file(digest)
+            except Exception as error:
+                logger.error("Exception while retrieving file `%s'. %r" %
+                             (filename, error))
+                self.finish()
+                return
+
+            max_size = FileCacher.CHUNK_SIZE
+            # max_size = 256
+            data = temp_file.read(max_size)
+            length = len(data)
+            files.append((real_filename, data, length < max_size))
+            temp_file.close()
+
+        self.render("view_submission_files.html",
+                    files=files, submission=submission, task=submission.task,
+                    s_idx=int(submission_num), **self.r_params)
+
 
 class SubmissionDetailsHandler(BaseHandler):
 
@@ -1827,6 +1960,8 @@ _cws_handlers = [
     (r"/", MainHandler),
     (r"/login", LoginHandler),
     (r"/logout", LogoutHandler),
+    (r"/register", RegisterHandler),
+    (r"/edit_info", EditInfoHandler),
     (r"/start", StartHandler),
     (r"/tasks/(.*)/description", TaskDescriptionHandler),
     (r"/tasks/(.*)/submissions", TaskSubmissionsHandler),
@@ -1836,6 +1971,8 @@ _cws_handlers = [
     (r"/tasks/(.*)/submissions/([1-9][0-9]*)", SubmissionStatusHandler),
     (r"/tasks/(.*)/submissions/([1-9][0-9]*)/details",
      SubmissionDetailsHandler),
+    (r"/tasks/(.*)/submissions/([1-9][0-9]*)/view_files",
+     ViewSubmissionFilesHandler),
     (r"/tasks/(.*)/submissions/([1-9][0-9]*)/files/(.*)",
      SubmissionFileHandler),
     (r"/tasks/(.*)/submissions/([1-9][0-9]*)/token", UseTokenHandler),
